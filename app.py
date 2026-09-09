@@ -274,3 +274,40 @@ if st.session_state.mission_started:
     st.write("🛟 **T+01:25** — Recommended rescue route generated")
 else:
     st.info("Start the mission to view mission events.")
+
+st.divider()
+
+# Emergency Response
+st.subheader("🚑 Emergency Response")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("### 👥 Rescue Volunteers")
+    if st.session_state.mission_started:
+        st.metric("Available Teams", "4")
+        st.write("Personnel available: **12**")
+        st.success("Team Alpha assigned to Survivor #01")
+    else:
+        st.metric("Available Teams", "—")
+        st.write("Start mission to assign rescue teams.")
+
+with col2:
+    st.markdown("### 🧰 Rescue Equipment")
+    if st.session_state.mission_started:
+        st.write("🪢 Rescue ropes: **6**")
+        st.write("🦺 Life jackets: **8**")
+        st.write("🛟 Inflatable stretcher: **2**")
+        st.write("🩹 First-aid kits: **4**")
+    else:
+        st.info("Equipment status unavailable")
+
+with col3:
+    st.markdown("### 🏥 Medical Support")
+    if st.session_state.mission_started:
+        st.success("Operational")
+        st.write("Nearest Hospital: **2.4 km**")
+        st.write("Emergency capacity: **Available**")
+        st.write("ETA: **8 min**")
+    else:
+        st.info("Start mission to locate medical support.")
