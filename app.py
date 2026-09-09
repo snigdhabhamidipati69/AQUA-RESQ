@@ -311,3 +311,60 @@ with col3:
         st.write("ETA: **8 min**")
     else:
         st.info("Start mission to locate medical support.")
+st.divider()
+
+# Communication & System Status
+st.subheader("📡 Communication & System Status")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric(
+        "🧠 Edge AI",
+        "ACTIVE" if st.session_state.mission_started else "STANDBY"
+    )
+
+with col2:
+    st.metric(
+        "📡 Network",
+        "LIMITED" if st.session_state.mission_started else "STANDBY"
+    )
+
+with col3:
+    st.metric(
+        "💻 Local Processing",
+        "ON" if st.session_state.mission_started else "OFF"
+    )
+
+with col4:
+    st.metric(
+        "🔄 Data Sync",
+        "ACTIVE" if st.session_state.mission_started else "—"
+    )
+st.divider()
+
+# Rescue Team Assignment
+st.subheader("🚑 Rescue Team Assignment")
+
+if st.session_state.mission_started:
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("### 👥 Team Alpha")
+        st.success("EN ROUTE")
+        st.write("Personnel: **3**")
+        st.write("ETA: **6 min**")
+
+    with col2:
+        st.markdown("### 🧰 Equipment")
+        st.write("🪢 Rescue rope")
+        st.write("🦺 Life jackets")
+        st.write("🛟 Inflatable stretcher")
+
+    with col3:
+        st.markdown("### 🎯 Assignment")
+        st.write("Target: **Survivor #01**")
+        st.write("Priority: **CRITICAL**")
+        st.write("Route: **Recommended**")
+else:
+    st.info("Start mission to assign rescue teams.")
