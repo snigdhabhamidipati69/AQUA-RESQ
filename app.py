@@ -1,370 +1,273 @@
 import streamlit as st
+import json
+import os
+import time
 import folium
 from streamlit_folium import st_folium
+from streamlit_autorefresh import st_autorefresh
+
+# ---------------------------------------------------------
+# AQUA-RESQ — Public Web Dashboard
+# ---------------------------------------------------------
 
 st.set_page_config(
-    page_title="AQUA-RESQ",
-    page_icon="🌊",
-    layout="wide"
+    page_title="AQUA-RESQ Mission Control",
+    page_icon="🚨",
+    layout="wide",
 )
 
-st.title("🌊 AQUA-RESQ")
-st.caption("AI-Powered Multi-Agent Flood Disaster Response System")
-if "mission_started" not in st.session_state:
-    st.session_state.mission_started = False
+st_autorefresh(interval=1000, key="datarefresh")
 
-if st.button("🚀 START MISSION"):
-    st.session_state.mission_started = True
+st.title("🚨 AQUA-RESQ Emergency Command & Intelligence Dashboard")
+st.markdown("**Live UAV/ROV AI Perception, Localization & System Telemetry**")
 
-if st.session_state.mission_started:
-    st.success("Mission started!")
+# ---------------------------------------------------------
+# DATA SOURCE
+# ---------------------------------------------------------
+# On the lab machine, the ROS 2 bridge can write to this file.
+# Streamlit Cloud cannot access a file on your laptop, so the
+# public deployment falls back to a clearly labelled simulation.
+# ---------------------------------------------------------
 
-st.divider()
+LOCAL_JSON_PATH = os.path.expanduser(
+    "~/aqua_gazebo_test/latest_detections.json"
+)
 
-# Mission Control
-st.subheader("🎯 Mission Control")
+DEMO_DETECTIONS = [
+    {
+        "class": "person",
+        "confidence": 0.89,
+        "priority": "HIGH",
+        "source": "UAV_Aerial_Cam",
+        "bbox": [337, 175, 397, 356],
+        "location": {
+            "latitude": 17.448976,
+            "longitude": 78.391276,
+        },
+    }
+]
 
-col1, col2, col3, col4 = st.columns(4)
 
-with col1:
-    drone_status = "ACTIVE" if st.session_state.mission_started else "STANDBY"
-    st.metric("🚁 Drone", drone_status)
+def load_detections():
+    """Load ROS2 bridge data locally; use demo data on public deployment."""
+    if os.path.exists(LOCAL_JSON_PATH):
+        try:
+            with open(LOCAL_JSON_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
-with col2:
-    uuv_status = "ACTIVE" if st.session_state.mission_started else "STANDBY"
-    st.metric("🌊 UUV", uuv_status)
+            if isinstance(data, dict):
+                data = [data]
 
-with col3:
-    flood_status = "ASSESSING" if st.session_state.mission_started else "HIGH"
-    st.metric("🌊 Flood Severity", flood_status)
+            if isinstance(data, list):
+                return data, "ROS 2 / Local Simulation"
 
-with col4:
-    alert_count = "0"
-    st.metric("🚨 Active Alerts", alert_count)
+        except (OSError, json.JSONDecodeError, TypeError):
+            pass
 
-st.divider()
+    return DEMO_DETECTIONS, "Public Demo / Simulated Data"
 
-# Main dashboard
-left, right = st.columns([2, 1])
 
-with left:
-    st.subheader("🗺️ Live Disaster Zone")
-    st.caption("⚠️ Prototype simulation — locations and detections are simulated.")
+detections, data_source = load_detections()
+target_count = len(detections)
 
-    # Create map
-    m = folium.Map(
-        location=[17.3850, 78.4867],
-        zoom_start=13
+# ---------------------------------------------------------
+# SIMULATED SYSTEM TELEMETRY
+# ---------------------------------------------------------
+
+elapsed_time = int(time.time()) % 100
+sim_battery = max(15, 98 - int(elapsed_time * 0.5))
+
+failsafe_status = (
+    "NOMINAL" if sim_battery > 20 else "RTL (Return To Launch)"
+)
+
+flight_mode = (
+    "AUTO_NAV" if sim_battery > 20 else "FAILSAFE_RTL"
+)
+
+# ---------------------------------------------------------
+# TOP STATUS BAR
+# ---------------------------------------------------------
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+col1.metric(
+    label="UAV Vision Feed",
+    value="ACTIVE",
+    delta="ROS 2 Jazzy",
+)
+
+col2.metric(
+    label="Flight Mode",
+    value=flight_mode,
+    delta="PX4/Sim Nav",
+)
+
+col3.metric(
+    label="UAV Battery",
+    value=f"{sim_battery}%",
+    delta="-0.5%/s" if sim_battery > 20 else "LOW BATTERY!",
+    delta_color="normal" if sim_battery > 20 else "inverse",
+)
+
+col4.metric(
+    label="Failsafe Status",
+    value=failsafe_status,
+    delta="System Ready" if sim_battery > 20 else "Auto Return Triggered",
+    delta_color="normal" if sim_battery > 20 else "inverse",
+)
+
+if target_count == 0:
+    col5.metric(
+        label="Alert Level",
+        value="NOMINAL",
+        delta="Area Clear",
     )
-
-    # Drone marker
-    folium.Marker(
-        [17.3900, 78.4800],
-        popup="🚁 Aerial Drone",
-        tooltip="Drone",
-        icon=folium.Icon(icon="send", prefix="fa")
-    ).add_to(m)
-
-    # UUV marker
-    folium.Marker(
-        [17.3780, 78.4920],
-        popup="🌊 Underwater Vehicle",
-        tooltip="UUV",
-        icon=folium.Icon(icon="tint", prefix="fa")
-    ).add_to(m)
-
-    # Survivor
-    # Survivor
-if st.session_state.mission_started:
-    folium.Marker(
-        [17.3820, 78.4880],
-        popup="👤 Possible Survivor",
-        tooltip="Survivor Detected",
-        icon=folium.Icon(color="red", icon="user")
-    ).add_to(m)
-
-    # Hazard
-    folium.Marker(
-        [17.3870, 78.4950],
-        popup="⚠️ Flood Hazard",
-        tooltip="Hazard",
-        icon=folium.Icon(color="orange", icon="warning-sign")
-    ).add_to(m)
-
-        # Simulated flooded zone
-    flood_zone = [
-        [17.394, 78.475],
-        [17.398, 78.490],
-        [17.388, 78.502],
-        [17.375, 78.497],
-        [17.370, 78.482],
-        [17.382, 78.470]
-    ]
-
-    folium.Polygon(
-        locations=flood_zone,
-        color="blue",
-        fill=True,
-        fill_color="blue",
-        fill_opacity=0.25,
-        popup="🌊 Flood-affected zone"
-    ).add_to(m)
-
-    # Mission route
-    route = [
-        [17.3900, 78.4800],
-        [17.3860, 78.4840],
-        [17.3820, 78.4880]
-    ]
-
-    folium.PolyLine(
-        route,
-        color="green",
-        weight=5,
-        popup="Recommended rescue route"
-    ).add_to(m)
-
-    st_folium(
-        m,
-        width=None,
-        height=500
-    )
-
-with right:
-    st.subheader("🚨 Alerts")
-
-    if st.session_state.mission_started:
-        st.error("👤 Survivor detected — Priority: HIGH")
-        st.warning("⚠️ Flood hazard detected near rescue zone")
-        st.info("🌊 UUV investigating submerged objects")
-    else:
-        st.success("No critical alerts")
-
-st.divider()
-
-# Vehicle Status
-st.subheader("🤖 Vehicle Status")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("### 🚁 Aerial Drone")
-    drone_vehicle_status = "ACTIVE" if st.session_state.mission_started else "STANDBY"
-    st.write(f"Status: **{drone_vehicle_status}**")
-    drone_battery = "87%" if st.session_state.mission_started else "100%"
-    st.write(f"Battery: **{drone_battery}**")
-    drone_altitude = "80 m" if st.session_state.mission_started else "0 m"
-    st.write(f"Altitude: **{drone_altitude}**")
-    st.write("Navigation: **GPS**")
-
-with col2:
-    st.markdown("### 🌊 Underwater Vehicle")
-    uuv_vehicle_status = "ACTIVE" if st.session_state.mission_started else "STANDBY"
-    st.write(f"Status: **{uuv_vehicle_status}**")
-    uuv_battery = "82%" if st.session_state.mission_started else "100%"
-    st.write(f"Battery: **{uuv_battery}**")
-    uuv_depth = "8 m" if st.session_state.mission_started else "0 m"
-    st.write(f"Depth: **{uuv_depth}**")
-    st.write("Navigation: **INS + Sonar**")
-
-st.divider()
-
-# AI Detection
-st.subheader("🤖 AI Detection & Analysis")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    survivor_count = "1" if st.session_state.mission_started else "0"
-    st.metric("👤 Survivors", survivor_count)
-
-with col2:
-    hazard_count = "2" if st.session_state.mission_started else "0"
-    st.metric("⚠️ Hazards", hazard_count)
-
-with col3:
-    submerged_count = "3" if st.session_state.mission_started else "0"
-    st.metric("🌊 Submerged Objects", submerged_count)
-
-with col4:
-    critical_count = "1" if st.session_state.mission_started else "0"
-    st.metric("🎯 Critical Targets", critical_count)
-
-st.divider()
-
-# Rescue Intelligence
-st.subheader("🧠 Rescue Intelligence")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        "🎯 Highest Priority",
-        "Survivor #01" if st.session_state.mission_started else "None"
-    )
-
-with col2:
-    st.metric(
-        "📊 Detection Confidence",
-        "94%" if st.session_state.mission_started else "—"
-    )
-
-with col3:
-    st.metric(
-        "🛟 Rescue Priority",
-        "CRITICAL" if st.session_state.mission_started else "—"
+else:
+    col5.metric(
+        label="Alert Level",
+        value="HIGH PRIORITY" if target_count == 1 else "MASS CASUALTY",
+        delta="Target Acquired" if target_count == 1 else "Critical Deployment",
     )
 
 st.divider()
 
-# AI Camera Feed
-st.subheader("📹 AI Detection Feed")
+# Make the demo/local nature explicit instead of implying a live internet feed.
+if data_source == "Public Demo / Simulated Data":
+    st.info(
+        "ℹ️ Public demonstration mode: detection, telemetry and GPS values "
+        "are simulated. The local ROS 2 pipeline can feed the same dashboard "
+        "when run on the simulation machine."
+    )
 
-col1, col2 = st.columns(2)
+if sim_battery <= 20:
+    st.warning(
+        "⚠️ **CRITICAL FAILSAFE ACTIVATED:** Battery below threshold (<20%). "
+        "UAV auto-executing Return To Launch (RTL)."
+    )
 
-with col1:
-    st.markdown("### 🚁 Drone — Aerial View")
+# ---------------------------------------------------------
+# ACTIVE TARGET INTELLIGENCE + MAP
+# ---------------------------------------------------------
 
-    if st.session_state.mission_started:
-        st.success("👤 Survivor detected")
-        st.write("Confidence: **94%**")
-        st.write("Location: **17.3820, 78.4880**")
-        st.write("Classification: **Person / High Priority**")
-    else:
-        st.info("Drone camera standby")
+if target_count > 0:
 
-with col2:
-    st.markdown("### 🌊 UUV — Underwater View")
+    left_col, right_col = st.columns([1, 1])
 
-    if st.session_state.mission_started:
-        st.warning("⚠️ Submerged objects detected")
-        st.write("Objects detected: **3**")
-        st.write("Depth: **8 m**")
-        st.write("Navigation: **INS + Sonar**")
-    else:
-        st.info("UUV camera standby")
+    with left_col:
 
-st.divider()
+        st.subheader("📋 Active Target Intelligence")
 
-# Rescue Recommendation
-st.subheader("🛟 Rescue Recommendation")
+        for idx, det in enumerate(detections):
 
-if st.session_state.mission_started:
+            target_class = str(det.get("class", "unknown")).upper()
+            confidence = float(det.get("confidence", 0.0))
+            priority = det.get("priority", "HIGH")
+            source = det.get("source", "UAV_Aerial_Cam")
+            bbox = det.get("bbox", [])
+
+            location = det.get("location", {})
+            lat = float(location.get("latitude", 0.0))
+            lon = float(location.get("longitude", 0.0))
+
+            st.error(
+                f"**Target #{idx + 1} — {target_class} IDENTIFIED**"
+            )
+
+            m1, m2 = st.columns(2)
+
+            m1.write(f"**Confidence:** {int(confidence * 100)}%")
+            m1.write(f"**Priority:** {priority}")
+
+            m2.write(f"**Source:** {source}")
+            m2.write(
+                f"**Simulated GPS:** `{lat:.6f}, {lon:.6f}`"
+            )
+
+            st.caption(f"Bounding Box (Pixels): {bbox}")
+
+            if st.button(
+                f"Dispatch Rescue Team to Target #{idx + 1}",
+                key=f"dispatch_{idx}",
+            ):
+                st.success(
+                    f"Rescue Unit Alpha dispatched to "
+                    f"Lat {lat:.6f}, Lon {lon:.6f}!"
+                )
+
+            st.markdown("---")
+
+        # -------------------------------------------------
+        # DECISION SUPPORT
+        # -------------------------------------------------
+
+        st.subheader(
+            "🏥 Automated Mission Decision & Resource Allocation"
+        )
+
+        st.info(
+            "**Allocated Trauma Center:** "
+            "Image Hospitals / Aashraya Hospitals "
+            "(Simulated Proximity)"
+        )
+
+        st.warning(
+            "**Recommended Resource:** "
+            "1x Amphibious Rescue Craft + 2x Paramedic Units"
+        )
+
+    # -----------------------------------------------------
+    # MAP
+    # -----------------------------------------------------
+
+    with right_col:
+
+        st.subheader("🗺️ Live Tactical Rescue Map")
+
+        first_location = detections[0].get("location", {})
+
+        center_lat = float(first_location.get("latitude", 17.448976))
+        center_lon = float(first_location.get("longitude", 78.391276))
+
+        m = folium.Map(
+            location=[center_lat, center_lon],
+            zoom_start=17,
+        )
+
+        for idx, det in enumerate(detections):
+
+            location = det.get("location", {})
+
+            lat = float(location.get("latitude", center_lat))
+            lon = float(location.get("longitude", center_lon))
+
+            target_class = det.get("class", "target")
+            confidence = float(det.get("confidence", 0.0))
+
+            folium.Marker(
+                [lat, lon],
+                popup=(
+                    f"Target #{idx + 1}: "
+                    f"{target_class} "
+                    f"({int(confidence * 100)}%)"
+                ),
+                tooltip=f"🚨 TARGET #{idx + 1} IDENTIFIED",
+                icon=folium.Icon(
+                    color="red",
+                    icon="user",
+                    prefix="fa",
+                ),
+            ).add_to(m)
+
+        st_folium(
+            m,
+            width=None,
+            height=450,
+        )
+
+else:
+
     st.success(
-        "Recommended Action: Deploy rescue team to Survivor #01 "
-        "using the green route shown on the map."
+        "✅ Scanning water sector... "
+        "No victims detected in camera field of view."
     )
-    st.write("📍 Target: 17.3820, 78.4880")
-    st.write("⚠️ Avoid detected flood hazard at 17.3870, 78.4950")
-else:
-    st.info("Start the mission to generate rescue recommendations.")
-
-st.divider()
-
-# Mission Timeline
-st.subheader("⏱️ Mission Timeline")
-
-if st.session_state.mission_started:
-    st.write("✅ **T+00:00** — Mission initiated")
-    st.write("🚁 **T+00:15** — Drone began aerial flood reconnaissance")
-    st.write("👤 **T+00:32** — Survivor detected with 94% confidence")
-    st.write("🌊 **T+00:45** — UUV deployed for underwater verification")
-    st.write("⚠️ **T+01:02** — Flood hazard identified")
-    st.write("🎯 **T+01:15** — Survivor classified as CRITICAL priority")
-    st.write("🛟 **T+01:25** — Recommended rescue route generated")
-else:
-    st.info("Start the mission to view mission events.")
-
-st.divider()
-
-# Emergency Response
-st.subheader("🚑 Emergency Response")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown("### 👥 Rescue Volunteers")
-    if st.session_state.mission_started:
-        st.metric("Available Teams", "4")
-        st.write("Personnel available: **12**")
-        st.success("Team Alpha assigned to Survivor #01")
-    else:
-        st.metric("Available Teams", "—")
-        st.write("Start mission to assign rescue teams.")
-
-with col2:
-    st.markdown("### 🧰 Rescue Equipment")
-    if st.session_state.mission_started:
-        st.write("🪢 Rescue ropes: **6**")
-        st.write("🦺 Life jackets: **8**")
-        st.write("🛟 Inflatable stretcher: **2**")
-        st.write("🩹 First-aid kits: **4**")
-    else:
-        st.info("Equipment status unavailable")
-
-with col3:
-    st.markdown("### 🏥 Medical Support")
-    if st.session_state.mission_started:
-        st.success("Operational")
-        st.write("Nearest Hospital: **2.4 km**")
-        st.write("Emergency capacity: **Available**")
-        st.write("ETA: **8 min**")
-    else:
-        st.info("Start mission to locate medical support.")
-st.divider()
-
-# Communication & System Status
-st.subheader("📡 Communication & System Status")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.metric(
-        "🧠 Edge AI",
-        "ACTIVE" if st.session_state.mission_started else "STANDBY"
-    )
-
-with col2:
-    st.metric(
-        "📡 Network",
-        "LIMITED" if st.session_state.mission_started else "STANDBY"
-    )
-
-with col3:
-    st.metric(
-        "💻 Local Processing",
-        "ON" if st.session_state.mission_started else "OFF"
-    )
-
-with col4:
-    st.metric(
-        "🔄 Data Sync",
-        "ACTIVE" if st.session_state.mission_started else "—"
-    )
-st.divider()
-
-# Rescue Team Assignment
-st.subheader("🚑 Rescue Team Assignment")
-
-if st.session_state.mission_started:
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown("### 👥 Team Alpha")
-        st.success("EN ROUTE")
-        st.write("Personnel: **3**")
-        st.write("ETA: **6 min**")
-
-    with col2:
-        st.markdown("### 🧰 Equipment")
-        st.write("🪢 Rescue rope")
-        st.write("🦺 Life jackets")
-        st.write("🛟 Inflatable stretcher")
-
-    with col3:
-        st.markdown("### 🎯 Assignment")
-        st.write("Target: **Survivor #01**")
-        st.write("Priority: **CRITICAL**")
-        st.write("Route: **Recommended**")
-else:
-    st.info("Start mission to assign rescue teams.")
