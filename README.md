@@ -1,59 +1,74 @@
-AQUA-RESQ
-From Sky to Subsurface: One Mission, Two Worlds
+# AQUA-RESQ
+
+## From Sky to Subsurface: One Mission, Two Worlds
+
 AQUA-RESQ is an AI-assisted search-and-rescue system designed for disaster and flood-response scenarios.
 
 The proposed system combines:
 
-UAV-based aerial reconnaissance
-AI-based person detection
-GPS-based geolocation
-Tethered underwater ROV reconnaissance
-Underwater camera and sonar sensing
-Sensor fusion
-A centralized rescue-intelligence dashboard
-The current implementation is a software proof-of-concept using ROS 2, Gazebo, PX4 SITL, YOLO, and Streamlit.
+- UAV-based aerial reconnaissance
+- AI-based person detection
+- GPS-based geolocation
+- Surface-buoy-assisted underwater reconnaissance
+- Underwater camera and sonar sensing
+- Sensor fusion
+- A centralized rescue-intelligence dashboard
 
-Current Working Prototype
-The current software pipeline demonstrates:
+The current implementation is a software proof-of-concept using ROS 2, Gazebo, PX4 SITL, YOLOv8, and Streamlit.
 
-Gazebo UAV
-    ↓
-RGB Camera
-    ↓
-ROS 2 Image Topic
-    ↓
-YOLOv8 Person Detection
-    ↓
-PX4 Global Position
-    ↓
-Detection JSON
-    ↓
-AQUA-RESQ Mission Dashboard
+---
+
+## Current Working Prototype
+
+The current software prototype demonstrates an integrated aerial perception pipeline using a simulated UAV.
+
+The working pipeline consists of:
+
+- Simulated UAV in Gazebo
+- Simulated RGB camera
+- ROS 2 image pipeline
+- YOLOv8 person detection
+- PX4 global-position data
+- Detection geolocation
+- JSON-based detection output
+- Streamlit mission dashboard
+
+When a person is detected in the simulated UAV camera, the system associates the detection with the UAV's simulated geographic position and writes the latest detection to:
+
+```text
+~/aqua_gazebo_test/latest_detections.json
+
+The Streamlit dashboard reads this information and displays the detection and its location on the mission map.
+
 Key Features
-1. UAV Simulation
+UAV-Based Reconnaissance
 
-The aerial vehicle is simulated using:
+The proposed system uses a UAV for wide-area aerial reconnaissance during disaster-response operations.
 
-PX4 SITL
-Gazebo Harmonic
-ROS 2 Jazzy
+The proposed UAV payload includes:
 
-The simulated UAV is equipped with an RGB camera.
+RGB camera
+Thermal camera
+GPS / RTK positioning
+IMU
+Onboard edge-computing hardware
 
-2. AI Person Detection
+The current software prototype demonstrates the RGB-camera perception pipeline in simulation.
 
-YOLOv8 is used to detect people in the simulated camera feed.
+AI-Based Person Detection
 
-The system records:
+YOLOv8 is used to detect people in the simulated UAV camera feed.
 
-Detected class
+For each detected person, the current prototype records:
+
+Detection class
 Confidence
 Detection priority
 Detection source
-UAV location
-3. GPS Geolocation
+UAV geographic position
+GPS-Based Geolocation
 
-The UAV's simulated PX4 global-position data is received through ROS 2.
+The simulated UAV receives global-position information from PX4.
 
 The system uses:
 
@@ -61,9 +76,9 @@ Latitude
 Longitude
 Altitude
 
-to associate a detected person with a geographic location.
+to associate a detected person with the UAV's simulated geographic location.
 
-4. Mission Dashboard
+Mission Dashboard
 
 The Streamlit dashboard provides a centralized interface for mission information.
 
@@ -81,11 +96,11 @@ Communication status
 
 The dashboard refreshes every 5 seconds.
 
-5. Underwater Reconnaissance Concept
+Underwater Reconnaissance
 
-The proposed system also includes a tethered underwater ROV for targeted investigation of submerged areas.
+The proposed system includes an underwater ROV supported by a surface buoy for targeted investigation of submerged areas.
 
-The proposed ROV sensing system includes:
+The proposed underwater sensing system includes:
 
 Underwater RGB / low-light camera
 Imaging sonar
@@ -93,57 +108,43 @@ Depth / pressure sensor
 IMU
 DVL or acoustic positioning
 
-The ROV is intended to investigate underwater areas when aerial reconnaissance indicates that further underwater information may be useful.
+The surface buoy is intended to provide a surface-level interface and communication relay for the underwater system.
+
+The ROV is intended for targeted underwater investigation when aerial reconnaissance indicates that additional underwater information may be useful.
 
 System Architecture
-                 ┌─────────────────────┐
-                 │      UAV / Drone     │
-                 │                     │
-                 │ RGB + Thermal Camera│
-                 │ GPS / RTK + IMU     │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                     AI Perception
-                       YOLOv8
-                            │
-                            ▼
-                    Person / Hazard
-                       Detection
-                            │
-                            ▼
-                     Geo-tagging
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Mission Dashboard   │
-                 │                     │
-                 │ Map + Targets       │
-                 │ Rescue Intelligence │
-                 └──────────┬──────────┘
-                            │
-                     Underwater Cue
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │   Tethered ROV      │
-                 │                     │
-                 │ Camera + Sonar      │
-                 │ Depth + IMU + DVL   │
-                 └─────────────────────┘
+
+The proposed system consists of two coordinated operational domains.
+
+Aerial System
+
+The UAV performs aerial reconnaissance using cameras and onboard sensing. AI-based perception identifies potential survivors or hazards, and detected locations can be associated with the UAV's geographic position.
+
+Surface Buoy
+
+The surface buoy acts as the interface between the surface and underwater system. It is intended to support communication and coordination with the underwater ROV.
+
+Underwater System
+
+The underwater ROV performs targeted investigation of submerged areas using underwater cameras, imaging sonar, depth sensing, and underwater positioning methods.
+
+Mission Dashboard
+
+The mission dashboard provides a common interface for viewing detection information, vehicle status, map data, and rescue intelligence.
+
 Technology Stack
 Simulation
 Ubuntu 24.04
 ROS 2 Jazzy
 Gazebo Harmonic
 PX4 SITL
-AI / Computer Vision
+AI and Computer Vision
 Python
 YOLOv8
 Ultralytics
 OpenCV
-OpenCV CvBridge
-Robotics
+CvBridge
+Robotics and Communication
 ROS 2
 PX4
 Micro XRCE-DDS
@@ -159,32 +160,37 @@ The ROS 2 package is located at:
 
 ros2_ws/src/aqua_resq/
 
-It contains:
+The package contains:
 
+package.xml
+setup.py
+setup.cfg
+resource/
 aqua_resq/
-├── package.xml
-├── setup.py
-├── setup.cfg
-└── aqua_resq/
-    ├── __init__.py
-    ├── offboard_control.py
-    └── camera_viewer.py
+
+The Python package contains:
+
+__init__.py
+offboard_control.py
+camera_viewer.py
 offboard_control.py
 
 Provides a ROS 2 offboard-control node for sending position setpoints to PX4.
 
 camera_viewer.py
 
-Connects:
+The perception node connects the simulated camera feed, YOLOv8 inference, and PX4 global-position data.
 
-ROS 2 Camera
-      +
-PX4 Global Position
-      +
-YOLOv8
+It performs the following operations:
 
-and produces dashboard-ready detection data.
-
+Receives camera frames through ROS 2.
+Converts ROS 2 images using CvBridge.
+Runs YOLOv8 inference.
+Identifies person detections.
+Obtains the latest valid UAV position from PX4.
+Associates the detection with the UAV position.
+Saves the latest detection as JSON.
+Displays the annotated camera feed.
 Important ROS 2 Topics
 Camera
 /aqua_resq/camera/image
@@ -201,16 +207,16 @@ Create and activate the dashboard environment:
 python3 -m venv ~/dashboard_env
 source ~/dashboard_env/bin/activate
 
-Install dependencies:
+Install the required dependencies:
 
 pip install -r requirements.txt
 
-Run:
+Run the dashboard:
 
 cd AQUA-RESQ
 streamlit run app.py
 
-Then open:
+The dashboard can then be opened at:
 
 http://localhost:8501
 Running the ROS 2 Package
@@ -234,7 +240,7 @@ The latest detection is stored locally as:
 
 ~/aqua_gazebo_test/latest_detections.json
 
-Example structure:
+Example:
 
 {
   "class": "person",
@@ -247,8 +253,11 @@ Example structure:
     "longitude": 8.546163
   }
 }
+
+The JSON file is used to transfer the latest detection information from the ROS 2 perception pipeline to the Streamlit dashboard.
+
 Project Status
-Currently demonstrated
+Currently Demonstrated
 UAV simulation
 Gazebo camera simulation
 ROS 2 camera pipeline
@@ -257,52 +266,56 @@ PX4 global-position integration
 Detection geolocation
 JSON-based detection output
 Streamlit mission dashboard
-Proposed / Future Hardware Implementation
+Proposed Future Hardware Implementation
 
-The following components are part of the proposed physical system and are not represented as fully deployed hardware in the current software proof-of-concept:
+The following components belong to the proposed physical system and are not represented as fully deployed hardware in the current software proof-of-concept:
 
 Physical UAV
-RGB + thermal payload
+RGB and thermal camera payload
 RTK positioning hardware
-Physical tethered underwater ROV
+Surface buoy
+Underwater ROV / UUV
 Underwater imaging sonar
 DVL / acoustic positioning
 Physical communication infrastructure
 Integrated aerial-underwater sensor fusion
 
-The repository therefore distinguishes between the current software prototype and the proposed future hardware system.
+The repository distinguishes between the current software prototype and the proposed future hardware system.
 
 Mission Concept
 
 The intended operational workflow is:
 
-DETECT
-   ↓
-LOCATE
-   ↓
-PRIORITIZE
-   ↓
-DISPATCH
-   ↓
-INVESTIGATE
-   ↓
-RESCUE
-   ↓
-CONTINUE MONITORING
+Detect potential survivors or hazards using aerial reconnaissance.
+Associate detected targets with their geographic locations.
+Prioritize targets using the available mission information.
+Provide target information to the rescue team through the mission dashboard.
+Deploy the underwater system when underwater investigation is required.
+Use the surface buoy and ROV for targeted underwater reconnaissance.
+Continue monitoring and update mission information as new detections become available.
+Safety and Deployment Considerations
 
-The UAV provides wide-area aerial reconnaissance.
+The current system is a simulation and software proof-of-concept.
 
-When underwater information is required, a tethered ROV can be used for targeted underwater investigation.
+A real-world deployment would require:
 
-The mission dashboard provides a common interface for viewing detection and rescue information.
+Hardware integration
+Sensor calibration
+Reliable communication links
+Autonomous navigation validation
+Fail-safe mechanisms
+Waterproofing and pressure protection for underwater components
+Field testing
+Regulatory compliance
+Human-supervised operational procedures
+
+The simulated UAV, camera, GPS position, and detected targets should not be interpreted as measurements from a physical aircraft or deployed rescue system.
 
 Disclaimer
 
 This repository contains a simulation and software proof-of-concept for the AQUA-RESQ concept.
 
-Simulation results should not be interpreted as validation of a real-world autonomous search-and-rescue system.
-
-Real deployment would require additional testing, hardware integration, communication validation, safety mechanisms, regulatory compliance, and field trials.
+The current implementation demonstrates the software perception and mission-dashboard pipeline in simulation. The proposed physical UAV, surface buoy, underwater ROV, and associated sensors require further engineering, integration, testing, and field validation before real-world deployment.
 
 References
 PX4 Autopilot
