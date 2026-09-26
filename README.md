@@ -113,7 +113,7 @@ The ROV is intended to investigate underwater areas when aerial reconnaissance i
 
 System Architecture
                  ┌─────────────────────┐
-                 │      UAV / Drone     │
+                 │      UAV / Drone    │
                  │                     │
                  │ RGB + Thermal Camera│
                  │ GPS / RTK + IMU     │
