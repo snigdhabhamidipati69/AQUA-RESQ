@@ -6,8 +6,8 @@ import folium
 from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="AQUA-RESQ Mission Control", page_icon="🚨", layout="wide")
-st_autorefresh(interval=1000, key="datarefresh")
+st.set_page_config(page_title="AQUA-RESQ Mission Control", page_icon="", layout="wide")
+st_autorefresh(interval=5000, key="datarefresh")
 
 if "mission_started" not in st.session_state:
     st.session_state.mission_started = False
@@ -40,7 +40,7 @@ def load_detections():
 detections, data_source = load_detections()
 target_count = len(detections)
 
-st.title("🚨 AQUA-RESQ Emergency Command & Intelligence Dashboard")
+st.title("AQUA-RESQ Emergency Command & Intelligence Dashboard")
 st.markdown("**Live UAV/ROV AI Perception, Localization & System Telemetry**")
 
 elapsed_time = int(time.time()) % 100
@@ -59,21 +59,21 @@ st.divider()
 if data_source == "Public Demo / Simulated Data":
     st.info("ℹ️ **Public demonstration mode:** detection, telemetry and GPS values are simulated. The local ROS 2 pipeline can feed the same dashboard when run on the simulation machine.")
 
-st.subheader("🎯 Mission Control")
+st.subheader("Mission Control")
 mc1,mc2,mc3,mc4 = st.columns(4)
 with mc1:
-    if st.button("🚀 START MISSION", use_container_width=True):
+    if st.button("START MISSION", use_container_width=True):
         st.session_state.mission_started = True
 with mc2:
-    if st.button("🔄 RESET MISSION", use_container_width=True):
+    if st.button("RESET MISSION", use_container_width=True):
         st.session_state.mission_started = False
         st.session_state.dispatch_clicked = False
 with mc3:
-    st.metric("🚁 Drone", "ACTIVE" if st.session_state.mission_started else "STANDBY")
+    st.metric("Drone", "ACTIVE" if st.session_state.mission_started else "STANDBY")
 with mc4:
-    st.metric("🌊 UUV", "ACTIVE" if st.session_state.mission_started else "STANDBY")
+    st.metric("UUV", "ACTIVE" if st.session_state.mission_started else "STANDBY")
 if st.session_state.mission_started:
-    st.success("✅ Mission started — multi-agent flood reconnaissance active.")
+    st.success("✅Mission started — multi-agent flood reconnaissance active.")
 st.divider()
 
 # Full disaster map plus new detection marker
@@ -82,9 +82,9 @@ with left:
     st.subheader("🗺️ Live Disaster Zone")
     st.caption("⚠️ Prototype simulation — locations, routes and detections are simulated.")
     m = folium.Map(location=[17.3850,78.4867], zoom_start=13)
-    folium.Marker([17.3900,78.4800], popup="🚁 Aerial Drone", tooltip="Drone",
+    folium.Marker([17.3900,78.4800], popup="Aerial Drone", tooltip="Drone",
                   icon=folium.Icon(icon="send", prefix="fa")).add_to(m)
-    folium.Marker([17.3780,78.4920], popup="🌊 Underwater Vehicle", tooltip="UUV",
+    folium.Marker([17.3780,78.4920], popup="Underwater Vehicle", tooltip="UUV",
                   icon=folium.Icon(icon="tint", prefix="fa")).add_to(m)
     if st.session_state.mission_started:
         folium.Marker([17.3820,78.4880], popup="👤 Possible Survivor",
@@ -100,7 +100,7 @@ with left:
     folium.Marker([17.3870,78.4950], popup="⚠️ Flood Hazard", tooltip="Hazard",
                   icon=folium.Icon(color="orange",icon="warning-sign")).add_to(m)
     flood_zone=[[17.394,78.475],[17.398,78.490],[17.388,78.502],[17.375,78.497],[17.370,78.482],[17.382,78.470]]
-    folium.Polygon(flood_zone,color="blue",fill=True,fill_color="blue",fill_opacity=0.25,popup="🌊 Flood-affected zone").add_to(m)
+    folium.Polygon(flood_zone,color="blue",fill=True,fill_color="blue",fill_opacity=0.25,popup="Flood-affected zone").add_to(m)
     route=[[17.3900,78.4800],[17.3860,78.4840],[17.3820,78.4880]]
     folium.PolyLine(route,color="green",weight=5,popup="Recommended rescue route").add_to(m)
     st_folium(m,width=None,height=500)
@@ -110,7 +110,7 @@ with right:
         if target_count:
             st.error(f"👤 {target_count} target(s) detected — Priority: {detections[0].get('priority','HIGH')}")
         st.warning("⚠️ Flood hazard detected near rescue zone")
-        st.info("🌊 UUV investigating submerged objects")
+        st.info("UUV investigating submerged objects")
     else:
         st.success("No active mission alerts")
 st.divider()
@@ -134,28 +134,28 @@ if st.session_state.mission_started and target_count:
         st.caption(f"Bounding Box (Pixels): {bbox}")
         if st.button(f"Dispatch Rescue Team to Target #{i+1}",key=f"dispatch_{i}",use_container_width=True):
             st.session_state.dispatch_clicked=True
-            st.success(f"🚑 Rescue Unit Alpha dispatched to Lat {lat:.6f}, Lon {lon:.6f}!")
+            st.success(f"Rescue Unit Alpha dispatched to Lat {lat:.6f}, Lon {lon:.6f}!")
 else:
     st.info("Start the mission to display active AI targets.")
 st.divider()
 
-st.subheader("🤖 Vehicle Status")
+st.subheader("Vehicle Status")
 a,b=st.columns(2)
 with a:
-    st.markdown("### 🚁 Aerial Drone")
+    st.markdown("### Aerial Drone")
     st.write(f"Status: **{'ACTIVE' if st.session_state.mission_started else 'STANDBY'}**")
     st.write(f"Battery: **{'87%' if st.session_state.mission_started else '100%'}**")
     st.write(f"Altitude: **{'80 m' if st.session_state.mission_started else '0 m'}**")
     st.write("Navigation: **GPS / RTK + IMU (simulated)**")
 with b:
-    st.markdown("### 🌊 Underwater Vehicle")
+    st.markdown("### Underwater Vehicle")
     st.write(f"Status: **{'ACTIVE' if st.session_state.mission_started else 'STANDBY'}**")
     st.write(f"Battery: **{'82%' if st.session_state.mission_started else '100%'}**")
     st.write(f"Depth: **{'8 m' if st.session_state.mission_started else '0 m'}**")
     st.write("Navigation: **INS + Sonar (simulated)**")
 st.divider()
 
-st.subheader("🤖 AI Detection & Analysis")
+st.subheader("AI Detection & Analysis")
 a,b,c,d=st.columns(4)
 a.metric("👤 Survivors",str(target_count) if st.session_state.mission_started else "0")
 b.metric("⚠️ Hazards","2" if st.session_state.mission_started else "0")
@@ -163,17 +163,17 @@ c.metric("🌊 Submerged Objects","3" if st.session_state.mission_started else "
 d.metric("🎯 Critical Targets","1" if st.session_state.mission_started and target_count else "0")
 st.divider()
 
-st.subheader("🧠 Rescue Intelligence")
+st.subheader("Rescue Intelligence")
 a,b,c=st.columns(3)
-a.metric("🎯 Highest Priority","Survivor #01" if st.session_state.mission_started else "None")
-b.metric("📊 Detection Confidence",f"{int(float(detections[0].get('confidence',0))*100)}%" if st.session_state.mission_started and target_count else "—")
-c.metric("🛟 Rescue Priority","CRITICAL" if st.session_state.mission_started else "—")
+a.metric("Highest Priority","Survivor #01" if st.session_state.mission_started else "None")
+b.metric("Detection Confidence",f"{int(float(detections[0].get('confidence',0))*100)}%" if st.session_state.mission_started and target_count else "—")
+c.metric("Rescue Priority","CRITICAL" if st.session_state.mission_started else "—")
 st.divider()
 
-st.subheader("📹 AI Detection Feed")
+st.subheader("AI Detection Feed")
 a,b=st.columns(2)
 with a:
-    st.markdown("### 🚁 Drone — Aerial View")
+    st.markdown("### Drone — Aerial View")
     if st.session_state.mission_started and target_count:
         det=detections[0]; loc=det.get("location",{})
         st.success("👤 Survivor / Person detected")
@@ -183,7 +183,7 @@ with a:
         st.write(f"Bounding Box: **{det.get('bbox',[])}**")
     else: st.info("Drone camera standby")
 with b:
-    st.markdown("### 🌊 UUV — Underwater View")
+    st.markdown("### UUV — Underwater View")
     if st.session_state.mission_started:
         st.warning("⚠️ Submerged objects detected")
         st.write("Objects detected: **3**")
@@ -192,17 +192,17 @@ with b:
     else: st.info("UUV camera standby")
 st.divider()
 
-st.subheader("🧠 Automated Mission Decision & Resource Allocation")
+st.subheader("Automated Mission Decision & Resource Allocation")
 if st.session_state.mission_started:
     st.info("**Allocated Trauma Center:** Image Hospitals / Aashraya Hospitals (Simulated Proximity)")
     st.warning("**Recommended Resource:** 1x Amphibious Rescue Craft + 2x Paramedic Units")
     if st.session_state.dispatch_clicked:
-        st.success("🚑 Rescue dispatch command recorded for the active target.")
+        st.success("Rescue dispatch command recorded for the active target.")
 else:
     st.info("Start the mission to generate mission recommendations.")
 st.divider()
 
-st.subheader("🛟 Rescue Recommendation")
+st.subheader("Rescue Recommendation")
 if st.session_state.mission_started:
     st.success("Recommended Action: Deploy rescue team to Survivor #01 using the green route shown on the map.")
     if target_count:
@@ -213,7 +213,7 @@ else:
     st.info("Start the mission to generate rescue recommendations.")
 st.divider()
 
-st.subheader("⏱️ Mission Timeline")
+st.subheader("Mission Timeline")
 if st.session_state.mission_started:
     st.write("✅ **T+00:00** — Mission initiated")
     st.write("🚁 **T+00:15** — Drone began aerial flood reconnaissance")
@@ -225,7 +225,7 @@ if st.session_state.mission_started:
 else: st.info("Start the mission to view mission events.")
 st.divider()
 
-st.subheader("🚑 Emergency Response")
+st.subheader("Emergency Response")
 a,b,c=st.columns(3)
 with a:
     st.markdown("### 👥 Rescue Volunteers")
@@ -245,15 +245,15 @@ with c:
     else: st.info("Start mission to locate medical support.")
 st.divider()
 
-st.subheader("📡 Communication & System Status")
+st.subheader("Communication & System Status")
 a,b,c,d=st.columns(4)
-a.metric("🧠 Edge AI","ACTIVE" if st.session_state.mission_started else "STANDBY")
-b.metric("📡 Network","LIMITED" if st.session_state.mission_started else "STANDBY")
-c.metric("💻 Local Processing","ON" if st.session_state.mission_started else "OFF")
-d.metric("🔄 Data Sync","ACTIVE" if st.session_state.mission_started else "—")
+a.metric("Edge AI","ACTIVE" if st.session_state.mission_started else "STANDBY")
+b.metric("Network","LIMITED" if st.session_state.mission_started else "STANDBY")
+c.metric("Local Processing","ON" if st.session_state.mission_started else "OFF")
+d.metric("Data Sync","ACTIVE" if st.session_state.mission_started else "—")
 st.divider()
 
-st.subheader("🚑 Rescue Team Assignment")
+st.subheader("Rescue Team Assignment")
 if st.session_state.mission_started:
     a,b,c=st.columns(3)
     with a:
