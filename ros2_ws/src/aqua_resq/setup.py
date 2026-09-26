@@ -14,7 +14,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Snigdha Bhamidipati',
-    maintainer_email='snigdha@example.com',
+    maintainer_email='25wh1a0471@bvrithyderabad.edu.in',
     description='AQUA-RESQ ROS2 simulation and perception package',
     license='Apache-2.0',
     tests_require=['pytest'],
