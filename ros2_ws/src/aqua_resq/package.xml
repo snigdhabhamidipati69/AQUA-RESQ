@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>AQUA-RESQ ROS2 simulation and perception package</description>
 
-  <maintainer email="snigdha@example.com">Snigdha Bhamidipati</maintainer>
+  <maintainer email="25wh1a0471@bvrithyderabad.edu.in">Snigdha Bhamidipati</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
